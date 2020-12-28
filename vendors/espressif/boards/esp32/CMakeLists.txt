@@ -245,6 +245,7 @@ target_include_directories(
         "${esp_idf_dir}/components/nimble/nimble/porting/npl/freertos/include"
         "${esp_idf_dir}/components/nimble/nimble/ext/tinycrypt/include"
         "${esp_idf_dir}/components/nimble/esp-hci/include"
+        "${esp_idf_dir}/components/open62541lib/include"
 
         "${afr_ports_dir}/ble"
         "${afr_ports_dir}/ble/bluedroid"
@@ -405,6 +406,9 @@ if(AFR_ENABLE_DEMOS OR AFR_ENABLE_TESTS)
         ${exe_target}
         "${board_dir}/application_code/main.c"
         ${extra_exe_sources}
+        "${esp_idf_dir}/components/open62541lib/DHT22.c"
+        "${esp_idf_dir}/components/open62541lib/model.c"
+        "${esp_idf_dir}/components/open62541lib/open62541.c"
     )
     target_include_directories(
         ${exe_target}
