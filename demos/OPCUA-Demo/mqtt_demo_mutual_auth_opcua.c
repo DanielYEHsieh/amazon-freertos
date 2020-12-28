@@ -462,6 +462,11 @@ static MQTTFixedBuffer_t xBuffer =
     democonfigNETWORK_BUFFER_SIZE
 };
 
+
+
+#define PUMP_SPEED_TOPIC    "ESPThingAFR/sitewise/PumpSpeed"
+#define FAN_SPEED_TOPIC    "ESPThingAFR/sitewise/FanSpeed"
+
 UA_ServerConfig *config;
 static UA_Boolean running = true;
 static UA_Boolean isServerCreated = false;
@@ -470,11 +475,10 @@ static UA_Boolean isConnectedServer = false;
 RTC_DATA_ATTR static int boot_count = 0;
 static struct tm timeinfo;
 static time_t now = 0;
-uint8_t mqttPayload[20] = { 0 };
-uint8_t mqttTopic[35] = { 0 };
+char mqttPayload[20] = { '\0' };
+char mqttTopic_FanSpeed[sizeof(FAN_SPEED_TOPIC)] = FAN_SPEED_TOPIC;
+char mqttTopic_PumpSpeed[sizeof(PUMP_SPEED_TOPIC)] = PUMP_SPEED_TOPIC;
 
-#define PUMP_SPEED_TOPIC    "ESPThingAFR/sitewise/PumpSpeed"
-#define FAN_SPEED_TOPIC    "ESPThingAFR/sitewise/FanSpeed"
 
 /*-----------------------------------------------------------*/
 
@@ -519,7 +523,7 @@ static void opcua_client_task( MQTTContext_t * pMQTTContext )
     LogInfo(( "Fire up OPC UA Client."));
     UA_Client *client = UA_Client_new();
     UA_ClientConfig_setDefault(UA_Client_getConfig(client));
-    UA_StatusCode status = UA_Client_connect(client, "opc.tcp://192.168.10.141:26543");
+    UA_StatusCode status = UA_Client_connect(client, "opc.tcp://192.168.0.12:26543");
     if(status != UA_STATUSCODE_GOOD) {
         UA_Client_delete(client);
         return status;
@@ -539,14 +543,13 @@ static void opcua_client_task( MQTTContext_t * pMQTTContext )
         printf("UA_Client_readValueAttribute----->\n");
         status = UA_Client_readValueAttribute(client, UA_NODEID_STRING(1, "PumpSpeed"), &value);
         memset( mqttPayload, '\0', 20 );
-        memset( mqttTopic, '\0', 35 );
         if( status == UA_STATUSCODE_GOOD ) {
             LogInfo(("the value is:%f\n", *(UA_Double*)value.data));
-            writeLen =sprintf( mqttPayload, "value:%f\n", *(UA_Double*)value.data );
-            memcpy( mqttTopic, "ESPThingAFR/sitewise/PumpSpeed\0", sizeof("ESPThingAFR/sitewise/PumpSpeed") );
-            LogInfo( ( "Publish to the MQTT topic %s., payload: %s", &mqttTopic , &mqttPayload ));
+            writeLen =sprintf( mqttPayload, "{\"value\":%.3f}", *(UA_Double*)value.data );
 
-            xDemoStatus = prvMQTTPublishToTopic( pMQTTContext, &mqttTopic, sizeof("ESPThingAFR/sitewise/PumpSpeed"), &mqttPayload, writeLen );
+            LogInfo( ( "Publish to the MQTT topic %s., payload: %s", &mqttTopic_PumpSpeed , &mqttPayload ));
+
+            xDemoStatus = prvMQTTPublishToTopic( pMQTTContext, &mqttTopic_PumpSpeed, sizeof(PUMP_SPEED_TOPIC), &mqttPayload, writeLen );
 
 //            if( xDemoStatus == pdPASS )
 //            {
@@ -570,21 +573,20 @@ static void opcua_client_task( MQTTContext_t * pMQTTContext )
         }
         else
         {
-            UA_StatusCode status = UA_Client_connect(client, "opc.tcp://192.168.10.141:26543");
+            UA_StatusCode status = UA_Client_connect(client, "opc.tcp://192.168.0.12:26543");
             LogInfo(("status %x\n", status ));
         }
 
 
         status = UA_Client_readValueAttribute(client, UA_NODEID_STRING(1, "FanSpeed"), &value);
         memset( mqttPayload, '\0', 20 );
-        memset( mqttTopic, '\0', 35 );
         if( status == UA_STATUSCODE_GOOD ) {
             LogInfo(("the value is:%f\n", *(UA_Double*)value.data));
-            writeLen = sprintf( mqttPayload, "value:%f\n", *(UA_Double*)value.data );
-            memcpy( mqttTopic, "ESPThingAFR/sitewise/FanSpeed", sizeof("ESPThingAFR/sitewise/FanSpeed") );
-            LogInfo( ( "Publish to the MQTT topic %s., payload: %s", &mqttTopic, &mqttPayload ));
+            writeLen = sprintf( mqttPayload, "{\"value\":%.3f}", *(UA_Double*)value.data );
 
-            xDemoStatus = prvMQTTPublishToTopic( pMQTTContext, &mqttTopic,  sizeof("ESPThingAFR/sitewise/FanSpeed") , &mqttPayload, writeLen );
+            LogInfo( ( "Publish to the MQTT topic %s., payload: %s", &mqttTopic_FanSpeed, &mqttPayload ));
+
+            xDemoStatus = prvMQTTPublishToTopic( pMQTTContext, &mqttTopic_FanSpeed,  sizeof(FAN_SPEED_TOPIC) , &mqttPayload, writeLen );
 
 //            if( xDemoStatus == pdPASS )
 //            {
