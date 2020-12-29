@@ -325,7 +325,7 @@ static BaseType_t prvMQTTSubscribeWithBackoffRetries( MQTTContext_t * pxMQTTCont
  *
  * @return pdFAIL on failure; pdPASS on successful PUBLISH operation.
  */
-static BaseType_t prvMQTTPublishToTopic( MQTTContext_t * pxMQTTContext,  uint8_t * pTopicName, uint8_t topicNameLength, uint8_t * pPayload, uint8_t payloadLength);
+static BaseType_t prvMQTTPublishToTopic( MQTTContext_t * pxMQTTContext,  uint8_t * pTopicName, uint16_t topicNameLength, uint8_t * pPayload, uint8_t payloadLength);
 
 /**
  * @brief Unsubscribes from the previously subscribed topic as specified
@@ -464,8 +464,10 @@ static MQTTFixedBuffer_t xBuffer =
 
 
 
-#define PUMP_SPEED_TOPIC    "ESPThingAFR/sitewise/PumpSpeed"
-#define FAN_SPEED_TOPIC    "ESPThingAFR/sitewise/FanSpeed"
+#define PUMP_SPEED_TOPIC    democonfigCLIENT_IDENTIFIER "/sitewise/PumpSpeed"
+#define FAN_SPEED_TOPIC    democonfigCLIENT_IDENTIFIER "/sitewise/FanSpeed"
+#define PUMP_SPEED_TOPIC_LENGTH   sizeof(PUMP_SPEED_TOPIC) - 1
+#define FAN_SPEED_TOPIC_LENGTH   sizeof(FAN_SPEED_TOPIC) - 1
 
 UA_ServerConfig *config;
 static UA_Boolean running = true;
@@ -523,7 +525,7 @@ static void opcua_client_task( MQTTContext_t * pMQTTContext )
     LogInfo(( "Fire up OPC UA Client."));
     UA_Client *client = UA_Client_new();
     UA_ClientConfig_setDefault(UA_Client_getConfig(client));
-    UA_StatusCode status = UA_Client_connect(client, "opc.tcp://192.168.0.12:26543");
+    UA_StatusCode status = UA_Client_connect(client, "opc.tcp://192.168.10.141:26543");
     if(status != UA_STATUSCODE_GOOD) {
         UA_Client_delete(client);
         return status;
@@ -549,7 +551,7 @@ static void opcua_client_task( MQTTContext_t * pMQTTContext )
 
             LogInfo( ( "Publish to the MQTT topic %s., payload: %s", &mqttTopic_PumpSpeed , &mqttPayload ));
 
-            xDemoStatus = prvMQTTPublishToTopic( pMQTTContext, &mqttTopic_PumpSpeed, sizeof(PUMP_SPEED_TOPIC), &mqttPayload, writeLen );
+            xDemoStatus = prvMQTTPublishToTopic( pMQTTContext, &mqttTopic_PumpSpeed, PUMP_SPEED_TOPIC_LENGTH, &mqttPayload, writeLen );
 
 //            if( xDemoStatus == pdPASS )
 //            {
@@ -586,7 +588,7 @@ static void opcua_client_task( MQTTContext_t * pMQTTContext )
 
             LogInfo( ( "Publish to the MQTT topic %s., payload: %s", &mqttTopic_FanSpeed, &mqttPayload ));
 
-            xDemoStatus = prvMQTTPublishToTopic( pMQTTContext, &mqttTopic_FanSpeed,  sizeof(FAN_SPEED_TOPIC) , &mqttPayload, writeLen );
+            xDemoStatus = prvMQTTPublishToTopic( pMQTTContext, &mqttTopic_FanSpeed,  FAN_SPEED_TOPIC_LENGTH , &mqttPayload, writeLen );
 
 //            if( xDemoStatus == pdPASS )
 //            {
@@ -1118,7 +1120,7 @@ static BaseType_t prvMQTTSubscribeWithBackoffRetries( MQTTContext_t * pxMQTTCont
 }
 /*-----------------------------------------------------------*/
 
-static BaseType_t prvMQTTPublishToTopic( MQTTContext_t * pxMQTTContext,  uint8_t * pTopicName, uint8_t topicNameLength, uint8_t * pPayload, uint8_t payloadLength )
+static BaseType_t prvMQTTPublishToTopic( MQTTContext_t * pxMQTTContext,  uint8_t * pTopicName, uint16_t topicNameLength, uint8_t * pPayload, uint8_t payloadLength )
 {
     MQTTStatus_t xResult;
     MQTTPublishInfo_t xMQTTPublishInfo;
@@ -1134,6 +1136,8 @@ static BaseType_t prvMQTTPublishToTopic( MQTTContext_t * pxMQTTContext,  uint8_t
     xMQTTPublishInfo.topicNameLength = topicNameLength;
     xMQTTPublishInfo.pPayload = pPayload;
     xMQTTPublishInfo.payloadLength = payloadLength;
+
+    LogInfo((" pTopicName: %s, len1 %u, len2 %u \n", pTopicName, ( uint16_t ) strlen( pTopicName ), topicNameLength ));
 
     /* Get a unique packet id. */
     usPublishPacketIdentifier = MQTT_GetPacketId( pxMQTTContext );

@@ -54583,8 +54583,8 @@ UA_ClientConnectionTCP_poll_callback(UA_Client *client, void *data) {
 
 UA_StatusCode
 UA_ClientConfig_setDefault(UA_ClientConfig *config) {
-    config->timeout = 5000;
-    config->secureChannelLifeTime = 10 * 60 * 1000; /* 10 minutes */
+    config->timeout = 500000;
+    config->secureChannelLifeTime = 10 * 60 * 100000; /* 10 minutes */
 
     if(!config->logger.log) {
        config->logger.log = UA_Log_Stdout_log;
@@ -54632,7 +54632,7 @@ UA_ClientConfig_setDefault(UA_ClientConfig *config) {
     config->stateCallback = NULL;
     config->connectivityCheckInterval = 0;
 
-    config->requestedSessionTimeout = 1200000; /* requestedSessionTimeout */
+    config->requestedSessionTimeout = 120000000; /* requestedSessionTimeout */
 
     config->inactivityCallback = NULL;
     config->clientContext = NULL;
